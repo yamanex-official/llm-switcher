@@ -317,21 +317,43 @@ OS 差は `internal/platform` に集約し、TUI は OS を意識しない。
 - ホーム: `os.UserHomeDir()`。改行コード: 設定ファイル書き出しは常に **LF**。
   パス区切りは `filepath` で自動選択。
 
+### シェル対応マトリクス
+
+| シェル | OS | プロファイル反映 | OS 環境変数反映 | プロファイル書式 |
+|---|---|---|---|---|
+| PowerShell (pwsh 7+) | Windows | ✓ (`$PROFILE`) | ✓ (`setx`) | `$env:KEY = "VALUE"` |
+| コマンドプロンプト (cmd.exe) | Windows | × (非対応) | ✓ (`setx`) | — |
+| Bash | WSL / Linux | ✓ (`~/.bashrc`) | ✓ (`~/.profile`) | `export KEY=VALUE` |
+| Zsh | macOS / Linux | ✓ (`~/.zshrc`) | ✓ (`~/.profile`) | `export KEY=VALUE` |
+| Fish | Linux | ✓ (`~/.config/fish/config.fish`) | ✓ (`~/.config/fish/config.fish`) | `set -gx KEY VALUE` |
+| Csh | Linux | ✓ (`~/.cshrc`) | ✓ (`~/.login`) | `setenv KEY VALUE` |
+| Tcsh | Linux | ✓ (`~/.tcshrc`) | ✓ (`~/.login`) | `setenv KEY VALUE` |
+
 ### Windows 11
 - CLI 設定ディレクトリ: `%USERPROFILE%\.claude` / `%USERPROFILE%\.codex` / `%USERPROFILE%\.config\opencode`
-- シェルプロファイル: PowerShell `$PROFILE`（pwsh 7+）。bash 利用時は `~/.bashrc`。
-- OS 環境変数: `setx` / Windows API。`Machine` スコープは UAC 昇格を促す。
+- シェル自動判定: WSL 実行中は Linux 側のシェル検出にフォールバック。
+  WSL 以外では `COMSPEC` / `SHELL` 環境変数で PowerShell と cmd.exe を判定。
+- プロファイル: PowerShell `$PROFILE`（pwsh 7+）。cmd.exe はシェルプロファイルの標準機構がないため、
+  「シェルプロファイル」反映先は非対応。代わりに「OS 環境変数」（`setx`）を使用すること。
+- OS 環境変数: `setx` コマンド（ユーザースコープ）。PowerShell・cmd.exe 両対応。
+  `Machine` スコープは要 UAC 昇格のため未サポート。
 
 ### macOS
 - CLI 設定ディレクトリ: `~/.claude` / `~/.codex` / `~/.config/opencode`
 - シェルプロファイル: 既定 zsh `~/.zshrc`（bash は `~/.bashrc`）。`$SHELL` から判定。
-- 永続環境変数: 標準手段がないため (c) プロファイルへ export で統一。
+- 永続環境変数: 標準手段がないためプロファイルへの export で統一。
 
 ### Ubuntu（Linux）
 - CLI 設定ディレクトリ: `~/.claude` / `~/.codex` / `~/.config/opencode`
-- シェルプロファイル: 既定 bash `~/.bashrc`（zsh は `~/.zshrc`）。
-- 永続環境変数: プロファイルへの export で統一。
+- シェルプロファイル: 既定 bash `~/.bashrc`。`$SHELL` から zsh / fish / csh / tcsh を自動判定。
+- 永続環境変数: プロファイルへの export で統一（シェルに応じて書式を自動切替）。
 - ファイル権限: シークレット保存ディレクトリは `0700`。
+
+### WSL（Windows Subsystem for Linux）
+- Windows バイナリを WSL 内で実行した場合、`/proc/sys/fs/binfmt_misc/WSLInterop` または
+  `WSL_DISTRO_NAME` 環境変数により WSL 環境を自動検出し、Linux のシェル検出ロジックにフォールバックする。
+- WSL 内の Linux シェル（bash/zsh/fish 等）のプロファイルに書き込み可能。
+- `setx` は Windows 側の環境変数を設定する。WSL 内で実行する場合は Linux バイナリの使用を推奨。
 
 ---
 
@@ -378,7 +400,27 @@ OS 差は `internal/platform` に集約し、TUI は OS を意識しない。
 
 ---
 
-## 16. 参照
+## 16. 免責事項
+
+- **環境変数反映の即時性**: シェルプロファイルおよび OS 環境変数への変更は、**反映後に新規シェルセッションを開始するまで有効になりません**。
+  既存の開いているターミナルウィンドウでは変更が反映されないため、再起動または新しいターミナルを開いてください。
+- **シェル自動判定の限界**: `$SHELL` 環境変数に基づいてシェルを判定します。`$SHELL` が設定されていない、
+  またはシンボリックリンクで実シェル名と異なる場合、正しく検出できない可能性があります。
+  その場合は手動で適切な反映先を選択してください。
+- **cmd.exe の制約**: コマンドプロンプトには標準的なシェルプロファイル機構がありません。
+  「シェルプロファイル」反映先は cmd.exe では使用できません。代わりに「OS 環境変数」（`setx`）を使用してください。
+- **WSL の制約**: Windows バイナリを WSL 内で実行した場合、Linux シェルとして認識されます。
+  `setx` による OS 環境変数設定は WSL 側ではなく Windows 側の環境変数に作用します。
+  WSL 内で Linux の挙動を期待する場合は Linux 版バイナリの使用を推奨します。
+- **ファイル破損**: 本ツールは既存設定ファイルのバックアップ（`.bak`）を自動作成しますが、
+  重要な設定ファイルは必ずご自身でもバックアップを取ってください。
+- **API キーの漏洩**: 本ツールは API キーをローカルファイルに平文で保存します。
+  ファイル権限 (`0600`) による保護に依存しており、暗号化は行いません。
+  共有マシンでの使用には十分注意してください。
+- **設定の競合**: 本ツールの管理対象外の方法（手動編集・他ツール）で設定ファイルや環境変数を変更した場合、
+  本ツールの表示と実際の状態が一致しなくなる可能性があります。
+
+## 17. 参照
 
 - Claude Code CLI reference — https://docs.claude.com/en/docs/claude-code/cli-reference
 - Codex Configuration Reference — https://developers.openai.com/codex/config-reference
