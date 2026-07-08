@@ -1,4 +1,4 @@
-# LLM Router
+# ローカルLLM Router
 
 対話型 AI コマンドラインツールの API 接続設定を一元管理する TUI アプリケーション。
 
