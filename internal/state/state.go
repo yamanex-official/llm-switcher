@@ -2,6 +2,7 @@ package state
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +31,14 @@ func profilePath(name string) (string, error) {
 		return "", err
 	}
 	safe := strings.ReplaceAll(name, string(filepath.Separator), "_")
-	return filepath.Join(d, "profile-"+safe+".json"), nil
+	safe = strings.ReplaceAll(safe, "/", "_")
+	safe = strings.ReplaceAll(safe, "\\", "_")
+	safe = strings.ReplaceAll(safe, "..", "__")
+	cleanPath := filepath.Clean(filepath.Join(d, "profile-"+safe+".json"))
+	if !strings.HasPrefix(cleanPath, filepath.Clean(d)+string(filepath.Separator)) {
+		return "", fmt.Errorf("profile name escapes config dir")
+	}
+	return cleanPath, nil
 }
 
 func SaveProfile(p model.Profile) error {

@@ -180,9 +180,9 @@ func (m appModel) updateEdit(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *appModel) commitEdit() {
-	m.editing.BaseURL = m.inputs[0].Value()
-	m.editing.APIKey = m.inputs[1].Value()
-	m.editing.Model = m.inputs[2].Value()
+	m.editing.BaseURL = strings.TrimSpace(m.inputs[0].Value())
+	m.editing.APIKey = strings.TrimSpace(m.inputs[1].Value())
+	m.editing.Model = strings.TrimSpace(m.inputs[2].Value())
 }
 
 func (m appModel) updateApply(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -236,7 +236,11 @@ func (m *appModel) doApply() {
 	if keyEnv != "" && m.editing.APIKey != "" {
 		vars = append(vars, apply.EnvVar{Name: keyEnv, Value: m.editing.APIKey})
 	}
-	m.results = apply.Apply(m.opts, configWrite, vars, m.homeDir)
+	opts := m.opts
+	if ad != nil {
+		opts.ConfigPaths = []string{ad.ConfigPath()}
+	}
+	m.results = apply.Apply(opts, configWrite, vars, m.homeDir)
 	m.load()
 }
 

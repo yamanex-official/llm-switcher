@@ -20,6 +20,7 @@ func NewCodex() *CodexAdapter { return &CodexAdapter{} }
 func (a *CodexAdapter) ID() model.CLIID     { return model.CLICodex }
 func (a *CodexAdapter) Name() string        { return "Codex" }
 func (a *CodexAdapter) ConfigDir() string   { return platform.CLIDirs()["codex"] }
+func (a *CodexAdapter) ConfigPath() string  { return filepath.Join(a.ConfigDir(), "config.toml") }
 
 func (a *CodexAdapter) Read() ([]model.Target, error) {
 	cfgPath := filepath.Join(a.ConfigDir(), "config.toml")
@@ -125,6 +126,8 @@ func saveTOML(path string, m map[string]interface{}) error {
 	if err != nil {
 		return err
 	}
-	_ = os.MkdirAll(filepath.Dir(path), 0o755)
-	return os.WriteFile(path, out, 0o644)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(path, out, 0o600)
 }

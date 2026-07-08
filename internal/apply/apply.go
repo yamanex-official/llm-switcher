@@ -10,21 +10,21 @@ import (
 
 // Result は 1 反映先の適用結果。
 type Result struct {
-	Kind    string // "config" | "envfile" | "profile" | "osenv"
-	Target  string // 説明
+	Kind    string
+	Target  string
 	Changed bool
 	Error   error
 }
 
 // Options は適用対象の選択。
 type Options struct {
-	ConfigFile bool
-	EnvFile    bool
-	Profile    bool
-	OSEnv      bool
+	ConfigFile  bool
+	EnvFile     bool
+	Profile     bool
+	OSEnv       bool
+	ConfigPaths []string // 設定ファイルのパス（トランザクション用スナップショット対象）
 }
 
-// Marker はシェルプロファイル管理ブロックの開始/終了マーカー。
 const (
 	markerStart = "# >>> llm-router >>>"
 	markerEnd   = "# <<< llm-router <<<"
@@ -37,9 +37,6 @@ type EnvVar struct {
 }
 
 // Apply は選択された反映先へ一括適用する（トランザクション）。
-// configWrite: 設定ファイル書き込み（adapter が行う）。nil ならスキップ。
-// envVars: .env / シェルプロファイル / OS環境変数へ書き出す変数群。
-// homeDir: .env 等のベースディレクトリ。
 func Apply(opts Options, configWrite func() error, envVars []EnvVar, homeDir string) []Result {
 	results := []Result{}
 
@@ -50,12 +47,12 @@ func Apply(opts Options, configWrite func() error, envVars []EnvVar, homeDir str
 	backups := []backup{}
 
 	snapshot := func(path string) error {
-		if _, err := os.Stat(path); err != nil {
-			backups = append(backups, backup{path: path, data: nil})
-			return nil
-		}
 		b, err := os.ReadFile(path)
 		if err != nil {
+			if os.IsNotExist(err) {
+				backups = append(backups, backup{path: path, data: nil})
+				return nil
+			}
 			return err
 		}
 		backups = append(backups, backup{path: path, data: b})
@@ -67,7 +64,17 @@ func Apply(opts Options, configWrite func() error, envVars []EnvVar, homeDir str
 			if bk.data == nil {
 				_ = os.Remove(bk.path)
 			} else {
-				_ = os.WriteFile(bk.path, bk.data, 0o644)
+				_ = os.WriteFile(bk.path, bk.data, 0o600)
+			}
+		}
+	}
+
+	// 1. 設定ファイルのスナップショット（書込前に取得）
+	if opts.ConfigFile {
+		for _, p := range opts.ConfigPaths {
+			if err := snapshot(p); err != nil {
+				results = append(results, Result{Kind: "config", Error: fmt.Errorf("snapshot: %w", err)})
+				return results
 			}
 		}
 	}
@@ -97,18 +104,23 @@ func Apply(opts Options, configWrite func() error, envVars []EnvVar, homeDir str
 	}
 
 	if opts.Profile {
-		p, err := detectProfilePath(homeDir)
-		if err != nil {
-			results = append(results, Result{Kind: "profile", Error: err})
+		info := detectShell(homeDir)
+		if info.ProfilePath == "" {
+			results = append(results, Result{
+				Kind:    "profile",
+				Target:  string(info.Type),
+				Error:   fmt.Errorf("このシェル (%s) はプロファイルに対応していません。代わりに OS 環境変数の反映を使用してください", info.Type),
+			})
 			rollback()
 			return results
 		}
+		p := info.ProfilePath
 		if err := snapshot(p); err != nil {
 			results = append(results, Result{Kind: "profile", Error: err})
 			rollback()
 			return results
 		}
-		if err := writeProfile(p, envVars); err != nil {
+		if err := writeProfileForShell(p, envVars, info.Type); err != nil {
 			results = append(results, Result{Kind: "profile", Error: err})
 			rollback()
 			return results
@@ -128,8 +140,19 @@ func Apply(opts Options, configWrite func() error, envVars []EnvVar, homeDir str
 	return results
 }
 
-// writeEnvFile は .env の該当行を更新（他行は保持）。
+func validateNoNewline(val string) error {
+	if strings.ContainsAny(val, "\r\n") {
+		return fmt.Errorf("value contains newline characters")
+	}
+	return nil
+}
+
 func writeEnvFile(path string, vars []EnvVar) error {
+	for _, v := range vars {
+		if err := validateNoNewline(v.Value); err != nil {
+			return fmt.Errorf("env var %s: %w", v.Name, err)
+		}
+	}
 	existing := map[string]string{}
 	if f, err := os.Open(path); err == nil {
 		defer f.Close()
@@ -155,12 +178,18 @@ func writeEnvFile(path string, vars []EnvVar) error {
 	for k, v := range merged {
 		sb.WriteString(fmt.Sprintf("%s=%s\n", k, v))
 	}
-	_ = os.MkdirAll(filepath.Dir(path), 0o755)
-	return os.WriteFile(path, []byte(sb.String()), 0o644)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(sb.String()), 0o600)
 }
 
-// writeProfile はマーカーブロックのみを管理（ブロック外は非破壊）。
-func writeProfile(path string, vars []EnvVar) error {
+func writeProfileLines(path string, vars []EnvVar, formatLine func(name, value string) string) error {
+	for _, v := range vars {
+		if err := validateNoNewline(v.Value); err != nil {
+			return fmt.Errorf("profile var %s: %w", v.Name, err)
+		}
+	}
 	lines := []string{}
 	if f, err := os.Open(path); err == nil {
 		defer f.Close()
@@ -187,9 +216,11 @@ func writeProfile(path string, vars []EnvVar) error {
 	}
 	sb.WriteString(markerStart + "\n")
 	for _, v := range vars {
-		sb.WriteString(fmt.Sprintf("export %s=%s\n", v.Name, v.Value))
+		sb.WriteString(formatLine(v.Name, v.Value) + "\n")
 	}
 	sb.WriteString(markerEnd + "\n")
-	_ = os.MkdirAll(filepath.Dir(path), 0o755)
-	return os.WriteFile(path, []byte(sb.String()), 0o644)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(sb.String()), 0o600)
 }

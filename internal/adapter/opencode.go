@@ -16,6 +16,7 @@ func NewOpenCode() *OpenCodeAdapter { return &OpenCodeAdapter{} }
 func (a *OpenCodeAdapter) ID() model.CLIID    { return model.CLIOpenCode }
 func (a *OpenCodeAdapter) Name() string       { return "OpenCode" }
 func (a *OpenCodeAdapter) ConfigDir() string  { return platform.CLIDirs()["opencode"] }
+func (a *OpenCodeAdapter) ConfigPath() string { return filepath.Join(a.ConfigDir(), "opencode.jsonc") }
 
 func (a *OpenCodeAdapter) Read() ([]model.Target, error) {
 	cfgPath := filepath.Join(a.ConfigDir(), "opencode.jsonc")

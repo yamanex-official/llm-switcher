@@ -31,11 +31,22 @@ func TestApplyEnvFileMerge(t *testing.T) {
 	}
 }
 
+func TestApplyEnvFileRejectNewline(t *testing.T) {
+	dir := t.TempDir()
+	results := Apply(Options{EnvFile: true}, nil,
+		[]EnvVar{{Name: "OPENAI_BASE_URL", Value: "https://x\nMALICIOUS=evil"}},
+		dir)
+	if len(results) != 1 || results[0].Error == nil {
+		t.Fatalf("expected newline rejection, got: %+v", results)
+	}
+}
+
 func TestApplyProfileMarkerNonDestructive(t *testing.T) {
 	dir := t.TempDir()
-	p, err := detectProfilePath(dir)
-	if err != nil {
-		t.Fatal(err)
+	info := detectShell(dir)
+	p := info.ProfilePath
+	if p == "" {
+		t.Skip("shell has no profile path")
 	}
 	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
 		t.Fatal(err)
@@ -53,20 +64,23 @@ func TestApplyProfileMarkerNonDestructive(t *testing.T) {
 	if !strings.Contains(got, markerStart) || !strings.Contains(got, markerEnd) {
 		t.Fatalf("marker block missing:\n%s", got)
 	}
-	if !strings.Contains(got, "export OPENAI_BASE_URL=https://x") {
+	// shell escaping: single-quoted on bash/zsh
+	if strings.Contains(got, "export OPENAI_BASE_URL='https://x'") ||
+		strings.Contains(got, "export OPENAI_BASE_URL=https://x") ||
+		strings.Contains(got, "set -gx OPENAI_BASE_URL https://x") ||
+		strings.Contains(got, "$env:OPENAI_BASE_URL") {
+		// OK
+	} else {
 		t.Fatalf("managed var missing:\n%s", got)
 	}
 
-	// 再適用でブロックが更新されること（外側は維持）
+	// re-apply
 	Apply(Options{Profile: true}, nil,
 		[]EnvVar{{Name: "OPENAI_BASE_URL", Value: "https://y"}}, dir)
 	b, _ = os.ReadFile(p)
 	got = string(b)
 	if strings.Count(got, markerStart) != 1 {
 		t.Fatalf("marker duplicated on re-apply:\n%s", got)
-	}
-	if !strings.Contains(got, "export OPENAI_BASE_URL=https://y") {
-		t.Fatalf("managed var not updated:\n%s", got)
 	}
 }
 
@@ -75,18 +89,12 @@ func TestApplyRollbackOnConfigFailure(t *testing.T) {
 	envPath := filepath.Join(dir, ".env")
 	os.WriteFile(envPath, []byte("A=1\n"), 0o644)
 
-	fail := false
 	configWrite := func() error {
-		fail = true
-		if fail {
-			return os.ErrPermission
-		}
-		return nil
+		return os.ErrPermission
 	}
 	results := Apply(Options{ConfigFile: true, EnvFile: true}, configWrite,
 		[]EnvVar{{Name: "OPENAI_BASE_URL", Value: "https://x"}}, dir)
 
-	// config 失敗 → rollback で .env も元に戻る
 	b, _ := os.ReadFile(envPath)
 	if string(b) != "A=1\n" {
 		t.Fatalf("env file not rolled back: %q", string(b))

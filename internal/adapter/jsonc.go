@@ -25,8 +25,8 @@ func saveJSONC(path string, m map[string]interface{}) error {
 	if err != nil {
 		return err
 	}
-	_ = os.MkdirAll(filepath.Dir(path), 0o755)
-	return os.WriteFile(path, out, 0o644)
+	_ = os.MkdirAll(filepath.Dir(path), 0o700)
+	return os.WriteFile(path, out, 0o600)
 }
 
 // stripJSONC は JSONC のコメントと末尾カンマを除去する（文字列内は考慮）。

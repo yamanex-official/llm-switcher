@@ -12,6 +12,7 @@ type Adapter interface {
 	ID() model.CLIID
 	Name() string
 	ConfigDir() string
+	ConfigPath() string // 設定ファイルのフルパス（スナップショット用）
 	// Read は現在の接続設定を (CLI, provider) ごとに読み取る。
 	Read() ([]model.Target, error)
 	// WriteConfig は base_url / model / api_key(設定ファイルが対応する場合) を設定ファイルへ書き込む。

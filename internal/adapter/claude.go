@@ -17,6 +17,7 @@ func NewClaude() *ClaudeAdapter { return &ClaudeAdapter{} }
 func (a *ClaudeAdapter) ID() model.CLIID        { return model.CLIClaude }
 func (a *ClaudeAdapter) Name() string           { return "Claude Code" }
 func (a *ClaudeAdapter) ConfigDir() string      { return platform.CLIDirs()["claude"] }
+func (a *ClaudeAdapter) ConfigPath() string     { return filepath.Join(a.ConfigDir(), "settings.json") }
 
 func (a *ClaudeAdapter) Read() ([]model.Target, error) {
 	t := model.Target{
@@ -80,6 +81,8 @@ func writeJSONField(path, key, val string) error {
 	if err != nil {
 		return err
 	}
-	_ = os.MkdirAll(filepath.Dir(path), 0o755)
-	return os.WriteFile(path, out, 0o644)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(path, out, 0o600)
 }
