@@ -1,12 +1,13 @@
-# LLM Router (llm-router)
+# LLM Router
 
 対話型 AI コマンドラインツールの API 接続設定を一元管理する TUI アプリケーション。
 
 <img width="1262" height="563" alt="2026-07-08_17h17_23" src="https://github.com/user-attachments/assets/e89fb912-5cec-4a0e-9a14-0d3216cd5e90" />
 
+---
 
 **対応 CLI**: Claude Code / Codex (OpenAI) / OpenCode  
-**対応 OS**: Windows / macOS / Ubuntu
+**対応 OS**: Windows / macOS / Linux（Ubuntu/Zorin OS想定）
 
 ---
 
