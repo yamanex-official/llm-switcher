@@ -1,6 +1,24 @@
 # build artifacts
 /bin/
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# test artifacts
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Go workspace
+go.work
+go.work.sum
+
+# env file
+.env
 
 # editor
 .opencode/
