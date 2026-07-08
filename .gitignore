@@ -2,11 +2,5 @@
 /bin/
 *.exe
 
-# llm-router local state (secrets)
-AppData/
-%APPDATA%/llm-router/
-Library/Application Support/llm-router/
-.config/llm-router/
-
 # editor
 .opencode/
