@@ -11,7 +11,7 @@
 
 ### バイナリ（推奨）
 
-[Releases](https://github.com/YOUR/llm-router/releases) からご自身の OS 向けバイナリをダウンロードし、実行するだけ。
+[Releases](https://github.com/yamanex-official/llm-router/releases) からご自身の OS 向けバイナリをダウンロードし、実行するだけ。
 
 | OS | ファイル |
 |---|---|
@@ -25,7 +25,7 @@ macOS で初回実行時にブロックされた場合: `xattr -dr com.apple.qua
 
 ```bash
 # Go 1.26+ が必要
-git clone https://github.com/YOUR/llm-router.git
+git clone https://github.com/yamanex-official/llm-router.git
 cd llm-router
 make build-all    # 3 OS 分をビルド
 # または
