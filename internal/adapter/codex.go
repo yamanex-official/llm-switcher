@@ -87,18 +87,12 @@ func (a *CodexAdapter) WriteConfig(t model.Target) error {
 	cfgPath := filepath.Join(a.ConfigDir(), "config.toml")
 	m, _ := loadTOML(cfgPath)
 	if t.ProviderID == "openai" {
-		if t.BaseURL != "" {
-			deepSet(m, "openai_base_url", t.BaseURL)
-		}
+		deepSet(m, "openai_base_url", t.BaseURL)
 	} else {
-		if t.BaseURL != "" {
-			deepSet(m, "model_providers."+t.ProviderID+".base_url", t.BaseURL)
-		}
+		deepSet(m, "model_providers."+t.ProviderID+".base_url", t.BaseURL)
 		deepSet(m, "model_providers."+t.ProviderID+".env_key", "OPENAI_API_KEY")
 	}
-	if t.Model != "" {
-		deepSet(m, "model", t.Model)
-	}
+	deepSet(m, "model", t.Model)
 	return saveTOML(cfgPath, m)
 }
 

@@ -246,10 +246,10 @@ func (m *appModel) doApply() {
 		baseEnv, keyEnv = ad.EnvNames(m.editing)
 	}
 	vars := []apply.EnvVar{}
-	if baseEnv != "" && m.editing.BaseURL != "" {
+	if baseEnv != "" {
 		vars = append(vars, apply.EnvVar{Name: baseEnv, Value: m.editing.BaseURL})
 	}
-	if keyEnv != "" && m.editing.APIKey != "" {
+	if keyEnv != "" {
 		vars = append(vars, apply.EnvVar{Name: keyEnv, Value: m.editing.APIKey})
 	}
 	opts := m.opts
@@ -333,10 +333,10 @@ func (m *appModel) loadProfileApply(name string) {
 		_ = ad.WriteConfig(t)
 		baseEnv, keyEnv := ad.EnvNames(t)
 		vars := []apply.EnvVar{}
-		if baseEnv != "" && t.BaseURL != "" {
+		if baseEnv != "" {
 			vars = append(vars, apply.EnvVar{Name: baseEnv, Value: t.BaseURL})
 		}
-		if keyEnv != "" && t.APIKey != "" {
+		if keyEnv != "" {
 			vars = append(vars, apply.EnvVar{Name: keyEnv, Value: t.APIKey})
 		}
 		_ = apply.Apply(apply.Options{EnvFile: true}, nil, vars, m.homeDir)

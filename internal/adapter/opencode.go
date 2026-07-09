@@ -70,15 +70,9 @@ func (a *OpenCodeAdapter) Read() ([]model.Target, error) {
 func (a *OpenCodeAdapter) WriteConfig(t model.Target) error {
 	cfgPath := filepath.Join(a.ConfigDir(), "opencode.jsonc")
 	m, _ := loadJSONC(cfgPath)
-	if t.Model != "" {
-		deepSet(m, "model", t.Model)
-	}
-	if t.BaseURL != "" {
-		deepSet(m, "provider."+t.ProviderID+".options.baseURL", t.BaseURL)
-	}
-	if t.APIKey != "" {
-		deepSet(m, "provider."+t.ProviderID+".options.apiKey", t.APIKey)
-	}
+	deepSet(m, "model", t.Model)
+	deepSet(m, "provider."+t.ProviderID+".options.baseURL", t.BaseURL)
+	deepSet(m, "provider."+t.ProviderID+".options.apiKey", t.APIKey)
 	return saveJSONC(cfgPath, m)
 }
 
