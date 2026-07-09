@@ -435,7 +435,7 @@ func (m appModel) viewDashboard() string {
 		line := fmt.Sprintf("%s%s/%s  [%s]  %s%s\n", cursor, t.CLI, t.ProviderID, status, t.BaseURL, install)
 		s += line
 	}
-	s += "\n" + noStyle.Render("(↑/↓ 選択  Enter 編集  p プロファイル  q 終了)")
+	s += "\n" + noStyle.Render("(↑/↓ 選択  Enter 編集  r 再読込  p プロファイル  q 終了)")
 	if m.msg != "" {
 		s += "\n" + warnStyle.Render(m.msg)
 	}
