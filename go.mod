@@ -1,4 +1,4 @@
-module llm-router
+module llm-switcher
 
 go 1.26.5
 

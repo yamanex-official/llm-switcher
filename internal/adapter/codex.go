@@ -6,8 +6,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"llm-router/internal/model"
-	"llm-router/internal/platform"
+	"llm-switcher/internal/model"
+	"llm-switcher/internal/platform"
 )
 
 // CodexAdapter は Codex (OpenAI) を扱う。

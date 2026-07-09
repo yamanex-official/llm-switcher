@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"llm-router/internal/model"
+	"llm-switcher/internal/model"
 )
 
 func writeProfileTo(path string, p model.Profile) error {

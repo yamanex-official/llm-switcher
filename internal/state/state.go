@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"llm-router/internal/model"
-	"llm-router/internal/platform"
+	"llm-switcher/internal/model"
+	"llm-switcher/internal/platform"
 )
 
 func dir() (string, error) {

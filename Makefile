@@ -1,5 +1,5 @@
-BINARY := llm-router
-SRC := ./cmd/llm-router
+BINARY := llm-switcher
+SRC := ./cmd/llm-switcher
 
 .PHONY: build build-all vet tidy clean
 

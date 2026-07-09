@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"llm-router/internal/model"
+	"llm-switcher/internal/model"
 )
 
 // Adapter は各 CLI の設定読み書きをカプセル化する。

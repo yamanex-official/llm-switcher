@@ -3,8 +3,8 @@ package adapter
 import (
 	"path/filepath"
 
-	"llm-router/internal/model"
-	"llm-router/internal/platform"
+	"llm-switcher/internal/model"
+	"llm-switcher/internal/platform"
 )
 
 // OpenCodeAdapter は OpenCode を扱う。設定は opencode.jsonc。

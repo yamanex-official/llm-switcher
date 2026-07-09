@@ -26,8 +26,8 @@ type Options struct {
 }
 
 const (
-	markerStart = "# >>> llm-router >>>"
-	markerEnd   = "# <<< llm-router <<<"
+	markerStart = "# >>> llm-switcher >>>"
+	markerEnd   = "# <<< llm-switcher <<<"
 )
 
 // EnvVar は書き込む環境変数。

@@ -6,17 +6,17 @@ import (
 	"runtime"
 )
 
-// AppConfigDir は llm-router 自身の設定ディレクトリを返す。
+// AppConfigDir は llm-switcher 自身の設定ディレクトリを返す。
 // 各 OS で os.UserConfigDir() が適切な場所を返す:
-//   - Windows: %APPDATA%\llm-router
-//   - macOS:   ~/Library/Application Support/llm-router
-//   - Linux:   ~/.config/llm-router
+//   - Windows: %APPDATA%\llm-switcher
+//   - macOS:   ~/Library/Application Support/llm-switcher
+//   - Linux:   ~/.config/llm-switcher
 func AppConfigDir() (string, error) {
 	base, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(base, "llm-router"), nil
+	return filepath.Join(base, "llm-switcher"), nil
 }
 
 // CLIDirs は対象 CLI のユーザー単位設定ディレクトリを返す。

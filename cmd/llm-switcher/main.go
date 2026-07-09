@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"llm-router/internal/tui"
+	"llm-switcher/internal/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

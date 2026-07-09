@@ -29,8 +29,8 @@ func TestAppConfigDir(t *testing.T) {
 		t.Fatal("empty config dir")
 	}
 	if runtime.GOOS == "windows" {
-		// %APPDATA%\llm-router
-		if !strings.Contains(d, "llm-router") {
+		// %APPDATA%\llm-switcher
+		if !strings.Contains(d, "llm-switcher") {
 			t.Fatalf("windows config dir unexpected: %s", d)
 		}
 	}

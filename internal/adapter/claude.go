@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"llm-router/internal/model"
-	"llm-router/internal/platform"
+	"llm-switcher/internal/model"
+	"llm-switcher/internal/platform"
 )
 
 // ClaudeAdapter は Claude Code を扱う。base_url / api_key は環境変数参照。

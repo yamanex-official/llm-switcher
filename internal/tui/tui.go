@@ -6,11 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"llm-router/internal/adapter"
-	"llm-router/internal/apply"
-	"llm-router/internal/detect"
-	"llm-router/internal/model"
-	"llm-router/internal/state"
+	"llm-switcher/internal/adapter"
+	"llm-switcher/internal/apply"
+	"llm-switcher/internal/detect"
+	"llm-switcher/internal/model"
+	"llm-switcher/internal/state"
+	"llm-switcher/internal/validate"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -41,6 +42,8 @@ type appModel struct {
 	results    []apply.Result
 	msg        string
 	homeDir    string
+	// validation
+	validateResult string
 	// profiles
 	profiles    []string
 	profCursor  int
@@ -122,6 +125,9 @@ func (m appModel) updateDashboard(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case "p":
 		m.state = scrProfiles
 		m.profCursor = 0
+	case "r":
+		m.load()
+		m.msg = "設定を再読み込みしました"
 	case "enter", "e":
 		if len(m.targets) == 0 {
 			return m, nil
@@ -219,6 +225,16 @@ func (m appModel) updateApply(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *appModel) doApply() {
+	m.validateResult = ""
+	if m.editing.BaseURL != "" {
+		if ok, err := validate.CheckReachable(m.editing.BaseURL); err != nil {
+			m.validateResult = "疎通失敗: " + err.Error()
+		} else if !ok {
+			m.validateResult = "base_url が空です"
+		} else {
+			m.validateResult = "疎通OK"
+		}
+	}
 	ad := findAdapter(m.adapters, m.editing.CLI)
 	var configWrite func() error
 	if ad != nil {
@@ -399,7 +415,7 @@ func (m appModel) View() string {
 }
 
 func (m appModel) viewDashboard() string {
-	s := titleStyle.Render("LLMルーター — ダッシュボード") + "\n\n"
+		s := titleStyle.Render("llm-switcher — ダッシュボード") + "\n\n"
 	if len(m.targets) == 0 {
 		s += noStyle.Render("接続先が見つかりません\n")
 	}
@@ -484,6 +500,13 @@ func (m appModel) viewResult() string {
 			line += ": " + r.Error.Error()
 		}
 		s += line + "\n"
+	}
+	if m.validateResult != "" {
+		vStyle := okStyle
+		if strings.Contains(m.validateResult, "失敗") || strings.Contains(m.validateResult, "空") {
+			vStyle = warnStyle
+		}
+		s += "\n疎通チェック: " + vStyle.Render(m.validateResult) + "\n"
 	}
 	s += "\n" + noStyle.Render("(Enter/Esc ダッシュボードへ)")
 	return s

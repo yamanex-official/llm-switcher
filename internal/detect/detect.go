@@ -3,8 +3,8 @@ package detect
 import (
 	"os/exec"
 
-	"llm-router/internal/model"
-	"llm-router/internal/platform"
+	"llm-switcher/internal/model"
+	"llm-switcher/internal/platform"
 )
 
 // targets は検出対象 CLI とその実行ファイル名。

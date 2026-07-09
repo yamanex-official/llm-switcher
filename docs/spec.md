@@ -140,8 +140,8 @@ CLI ごとに異なるファイル形式（JSON / TOML / JSONC）と環境変数
 
 ### ディレクトリ構成（予定）
 ```
-llm-router/
-├── cmd/llm-router/main.go        # エントリポイント
+llm-switcher/
+├── cmd/llm-switcher/main.go        # エントリポイント
 ├── internal/
 │   ├── detect/                   # CLI 検出
 │   ├── adapter/                  # claude/codex/opencode 読み書きアダプタ
@@ -190,8 +190,8 @@ type Profile struct {
 }
 ```
 
-- アプリ自身の状態は `os.UserConfigDir()` 配下の `llm-router/`（第 11 章「OS 固有」参照）に保存。
-  ※第 6 章旧版の `~/.config/llm-router/` は Linux のみで正しく、Windows/macOS では一致しないため
+- アプリ自身の状態は `os.UserConfigDir()` 配下の `llm-switcher/`（第 11 章「OS 固有」参照）に保存。
+  ※第 6 章旧版の `~/.config/llm-switcher/` は Linux のみで正しく、Windows/macOS では一致しないため
   `os.UserConfigDir()` に一本化（レビュー B4）。
 - **シークレットは平文でローカル保存**。OS のファイル権限で保護（Ubuntu は `0700`）。
   必要なら v1.1 で OS キーチェーン連携を検討。
@@ -247,10 +247,10 @@ type Profile struct {
 プロファイルを直接書き換えず、以下の管理ブロックのみを管理する。
 
 ```
-# >>> llm-router >>>
+# >>> llm-switcher >>>
 export OPENAI_BASE_URL=https://...
 export OPENAI_API_KEY=sk-...
-# <<< llm-router <<<
+# <<< llm-switcher <<<
 ```
 
 - ブロック外の行（ユーザーの既存設定）には一切触らない。
@@ -267,7 +267,7 @@ export OPENAI_API_KEY=sk-...
 - **整合性検証（レビュー D2）**: Releases に `checksums.txt`（SHA256）を同梱し、ダウンロードの
   改ざんチェックを可能にする。
 - **macOS Gatekeeper（レビュー C3）**: v1.0 は未署名。README に「右クリック→開く」または
-  `xattr -dr com.apple.quarantine llm-router` の手動許可手順を記載。codesign + notarize は v1.1 で検討。
+  `xattr -dr com.apple.quarantine llm-switcher` の手動許可手順を記載。codesign + notarize は v1.1 で検討。
 - オプション（利便性のみ・必須ではない）: Windows `scoop` / macOS `brew` / Ubuntu `deb` 提供（v1.1）。
 
 ---
@@ -310,10 +310,10 @@ export OPENAI_API_KEY=sk-...
 OS 差は `internal/platform` に集約し、TUI は OS を意識しない。
 
 ### 共通
-- アプリ設定ディレクトリ: **`os.UserConfigDir()` 配下の `llm-router/`**（レビュー B4 統一）。
-  - Windows: `%APPDATA%\llm-router\`
-  - macOS: `~/Library/Application Support/llm-router/`
-  - Ubuntu: `~/.config/llm-router/`
+- アプリ設定ディレクトリ: **`os.UserConfigDir()` 配下の `llm-switcher/`**（レビュー B4 統一）。
+  - Windows: `%APPDATA%\llm-switcher\`
+  - macOS: `~/Library/Application Support/llm-switcher/`
+  - Ubuntu: `~/.config/llm-switcher/`
 - ホーム: `os.UserHomeDir()`。改行コード: 設定ファイル書き出しは常に **LF**。
   パス区切りは `filepath` で自動選択。
 
@@ -362,7 +362,7 @@ OS 差は `internal/platform` に集約し、TUI は OS を意識しない。
 - API Key は画面でデフォルトマスク。
 - エクスポート時はシークレットを除外（または暗号化）。
 - ハードコード禁止（ソース内にキーを書かない）。
-- コミット対象外: `llm-router` の状態ディレクトリを `.gitignore` に含める。
+- コミット対象外: `llm-switcher` の状態ディレクトリを `.gitignore` に含める。
 - `gitleaks` を導入し、キー混入を CI/フックで検知（dev ルート方針に準拠）。
 
 ---
