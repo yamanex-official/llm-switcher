@@ -176,7 +176,7 @@ func (m appModel) updateEdit(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case "enter":
 		m.commitEdit()
-		m.opts = apply.Options{ConfigFile: true}
+		m.opts = apply.Options{ConfigFile: true, EnvFile: true}
 		m.state = scrApply
 		return m, nil
 	}
